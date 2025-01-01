@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <h3> User </h3>
+        <input type="text" id="user">
+        <button id="btn">Log or Add</button>
+    </div>
+    <script>
+        let inp = document.getElementById("user")
+        let btn = document.getElementById("btn")
+        
+        async function sendData(name) {
+            const response = await fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name }),
+            });
+            const result = await response.json();
+            return result
+        }
+
+        btn.onclick = async ()=>{
+            let res = await sendData( inp.value )
+            sessionStorage.setItem( 'userId', res.id.toString() )
+            window.location.href = '/logged';
+        }
+        
+    </script>
+
+    
+</body>
+</html>

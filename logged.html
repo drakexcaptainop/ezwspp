@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">msg</th>
+            </tr>
+        </thead>
+        <tbody id="messages">
+                       
+        </tbody>
+        <tfoot>
+            <tr>
+            </tr>
+        </tfoot>
+    </table>
+
+    <tr>
+        
+
+    <div>
+        <h1>
+         users
+        </h1>
+        <div>
+            <label for="">message: </label>
+            <input type="text" id="msg">
+            <select name="" id="userSelect">
+                asdasd
+            </select>
+            <button id="btn">send</button>
+        </div>
+    </div>
+    
+    <script>
+        let prevUsers = null
+
+        function buildUserSelect(users){
+            let s = document.getElementById('userSelect')
+            s.innerHTML = ''
+            for(let user of users){
+                let opt = document.createElement('option')
+                opt.value = user._id
+                opt.innerText=user.name
+                s.appendChild(opt)
+            }
+        }
+
+        function buildTableBody(messages) {
+            let tbody = document.getElementById('messages')
+            tbody.innerHTML = ''
+            for(let msg of messages){
+                let tr = document.createElement('tr')
+                let td = document.createElement('td')
+                tr.appendChild(td)
+                td.innerText = msg.content
+                tbody.appendChild( tr )
+            }
+        }
+
+        async function sendMessage(){
+            let content = document.getElementById('msg').value
+            let senderId = sessionStorage.getItem('userId')
+            let recieverId = document.getElementById('userSelect').value
+            const response = await fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ senderId, recieverId, content }),
+            });
+
+            const result = await response.json();
+            console.log(result)
+            return result
+
+            
+        }
+
+        document.getElementById('btn').onclick = sendMessage
+
+
+        function checkEqual( recievedUsers ) {
+            if(!prevUsers) {
+                prevUsers = recievedUsers
+                return false
+            }
+            for(let oldUser of prevUsers){
+                if(!recievedUsers.some((newUser) => oldUser.name == newUser.name)){
+                    return false 
+                }
+            }
+            return true
+        }
+        const source = new EventSource(`/events?userId=${sessionStorage.getItem("userId")}`)
+        source.onmessage = (ev) => {
+            let data = JSON.parse(ev.data)
+            if(!checkEqual( data.users )){
+                buildUserSelect(data.users)
+            }
+            console.log(data.messages)
+            if(data.messages){
+                buildTableBody( data.messages )
+            }
+        }
+        source.onerror = (error) => {
+            console.error('Error with SSE:', error);
+            source.close()
+        };
+    </script>
+</body>
+</html>
